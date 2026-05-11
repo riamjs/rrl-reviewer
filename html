@@ -1,0 +1,257 @@
+cat > /mnt/user-data/outputs/index.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRL Quiz — UHS Appointment System</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#ffffff;--bg2:#f5f5f5;--bg3:#eaeaea;
+    --text:#111111;--text2:#555555;--text3:#888888;
+    --border:#e0e0e0;--border2:#c0c0c0;
+    --blue-bg:#e6f1fb;--blue-text:#0c447c;--blue-border:#185fa5;
+    --green-bg:#eaf3de;--green-text:#27500a;--green-border:#3b6d11;
+    --red-bg:#fcebeb;--red-text:#791f1f;--red-border:#a32d2d;
+    --amber-bg:#faeeda;--amber-text:#633806;--amber-border:#854f0b;
+    --purple-bg:#eeedfe;--purple-text:#3c3489;--purple-border:#534ab7;
+    --radius:8px;--radius-lg:12px;
+  }
+  @media(prefers-color-scheme:dark){
+    :root{
+      --bg:#1a1a1a;--bg2:#242424;--bg3:#2e2e2e;
+      --text:#f0f0f0;--text2:#aaaaaa;--text3:#777777;
+      --border:#333333;--border2:#555555;
+      --blue-bg:#0c447c;--blue-text:#b5d4f4;--blue-border:#378add;
+      --green-bg:#27500a;--green-text:#c0dd97;--green-border:#639922;
+      --red-bg:#791f1f;--red-text:#f7c1c1;--red-border:#e24b4a;
+      --amber-bg:#633806;--amber-text:#fac775;--amber-border:#ba7517;
+      --purple-bg:#3c3489;--purple-text:#cecbf6;--purple-border:#7f77dd;
+    }
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg3);color:var(--text);min-height:100vh;padding:1.5rem 1rem}
+  #app{max-width:700px;margin:auto}
+  header{text-align:center;margin-bottom:2rem}
+  header h1{font-size:22px;font-weight:600;color:var(--text);margin-bottom:4px}
+  header p{font-size:13px;color:var(--text2)}
+  .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+  .score-row{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{font-size:12px;padding:4px 10px;border-radius:99px;font-weight:500;border:1px solid;display:inline-flex;align-items:center;gap:4px}
+  .pill-correct{background:var(--green-bg);color:var(--green-text);border-color:var(--green-border)}
+  .pill-wrong{background:var(--red-bg);color:var(--red-text);border-color:var(--red-border)}
+  .pill-info{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-border)}
+  .pill-mode{background:var(--purple-bg);color:var(--purple-text);border-color:var(--purple-border)}
+  .progress-wrap{height:6px;background:var(--bg3);border-radius:99px;overflow:hidden;margin-bottom:1.25rem;border:1px solid var(--border)}
+  .progress-bar{height:100%;background:#378add;border-radius:99px;transition:width .4s ease}
+  .mode-tabs{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap}
+  .tab{font-size:12px;padding:5px 12px;border-radius:99px;border:1px solid var(--border);background:var(--bg2);cursor:pointer;color:var(--text2);transition:all .15s;font-family:inherit}
+  .tab:hover{border-color:var(--border2);color:var(--text)}
+  .tab.active{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-border);font-weight:500}
+  .card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem}
+  .mode-badge{font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--text3);text-transform:uppercase;margin-bottom:.5rem}
+  .clue-text{font-size:15px;color:var(--text);line-height:1.65;margin-bottom:.5rem}
+  .clue-label{font-size:13px;color:var(--text2);margin-top:1rem;margin-bottom:.25rem}
+  .hint-btn{font-size:12px;color:var(--blue-text);background:none;border:none;cursor:pointer;padding:4px 0;margin-top:.5rem;display:inline-flex;align-items:center;gap:4px;font-family:inherit}
+  .hint-btn:hover{text-decoration:underline}
+  .hint-reveal{background:var(--bg2);border-radius:var(--radius);padding:.65rem 1rem;margin-top:.5rem;font-size:13px;color:var(--text2);border:1px solid var(--border)}
+  .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:1.25rem}
+  @media(max-width:520px){.options-grid{grid-template-columns:1fr}}
+  .opt{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.7rem .9rem;font-size:13px;color:var(--text);cursor:pointer;text-align:left;line-height:1.45;transition:border-color .15s,background .15s;font-family:inherit}
+  .opt:hover:not(:disabled){border-color:var(--blue-border);background:var(--blue-bg);color:var(--blue-text)}
+  .opt.correct{border-color:var(--green-border)!important;background:var(--green-bg)!important;color:var(--green-text)!important;font-weight:500}
+  .opt.wrong{border-color:var(--red-border)!important;background:var(--red-bg)!important;color:var(--red-text)!important}
+  .opt.reveal{border-color:var(--green-border)!important;background:var(--green-bg)!important;color:var(--green-text)!important;opacity:.65}
+  .opt:disabled{cursor:default}
+  .feedback{margin-top:1rem;border-radius:var(--radius);padding:.8rem 1rem;font-size:13px;line-height:1.6;font-weight:500}
+  .feedback.correct{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+  .feedback.wrong{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+  .detail-block{margin-top:.75rem;background:var(--bg2);border-radius:var(--radius);padding:.8rem 1rem;font-size:13px;color:var(--text2);line-height:1.65;border:1px solid var(--border)}
+  .detail-block strong{color:var(--text);font-weight:600}
+  .nav-row{display:flex;justify-content:flex-end;margin-top:1rem;gap:8px}
+  .next-btn{background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);padding:.5rem 1.2rem;font-size:13px;cursor:pointer;color:var(--text);font-family:inherit;transition:background .15s}
+  .next-btn:hover{background:var(--bg2)}
+  .restart-btn{background:none;border:1px solid var(--border);border-radius:99px;padding:4px 12px;font-size:12px;cursor:pointer;color:var(--text2);font-family:inherit}
+  .restart-btn:hover{background:var(--bg2);color:var(--text)}
+  .end-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem;text-align:center}
+  .end-score{font-size:52px;font-weight:700;color:var(--text);margin:.5rem 0}
+  .end-label{font-size:15px;color:var(--text2);margin-bottom:1.5rem}
+  .end-grade{display:inline-block;padding:4px 14px;border-radius:99px;font-size:13px;font-weight:600;margin-bottom:1rem}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+  svg.icon{width:14px;height:14px;display:inline-block;vertical-align:-2px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>RRL Quiz</h1>
+    <p>UHS Online Appointment System — Related Review of Literature</p>
+  </header>
+  <div id="quiz-root"></div>
+</div>
+
+<script>
+const RRLS=[
+  {id:"2.1.1",title:"AI-Driven Doctor Scheduling for Efficient Patient Appointments",authors:"Shelke, Hardas, Mohite, Rathod, and Barik",year:2025,focus:"AI and SVM-based doctor scheduling optimization",context:"Uses support vector machines (SVM) to predict appointment attendance and prioritize scheduling by urgency, patient needs, and resource availability. Facial recognition replaces passwords for enhanced security. Automated notifications reduce missed appointments.",result:"Improved hospital efficiency, patient satisfaction, and doctor utilization. Doctors experienced better time management and less administrative workload. Future enhancements include email alerts, predictive analytics, and personalized AI appointment suggestions.",keywords:["SVM","facial recognition","scheduling","AI","no-show prediction"]},
+  {id:"2.1.2",title:"Analyzing and evaluating existing dental practice management software",authors:"Kharchenko",year:2023,focus:"Gaps and challenges in dental practice management software",context:"Evaluation of dental practice management software focusing on usability, integration, and security. Examined how lack of centralized analytics hinders decision-making. Manual processes cause errors, inefficiencies, and patient dissatisfaction.",result:"EHRs and MIS improved workflow and scheduling, but challenges remain in training, security, customization, mobile access, and speed.",keywords:["dental","EHR","MIS","usability","software evaluation"]},
+  {id:"2.1.3",title:"Appointment scheduling problem in complexity systems of healthcare services: A comprehensive review",authors:"Ala and Chen",year:2022,focus:"Comprehensive review of healthcare scheduling optimization techniques",context:"Reviewed over 150 studies on scheduling of healthcare services. Covered simulation, mathematical, Markov chain, queuing, and AI techniques including genetic algorithms and deep learning.",result:"Hybrid models and overlapping approaches effective in reducing waiting times and idle times. Waiting time identified as the most critical scheduling challenge. AI use needs improvement.",keywords:["150 studies","Markov chain","queuing","genetic algorithms","optimization","hybrid models"]},
+  {id:"2.1.4",title:"CareConnect: Streamlined hospital appointment system",authors:"Namratha, Ayesha, Hindusri, Lokeswari, Niharika, and Husnu Mubarak",year:2025,focus:"Java Full Stack web-based hospital appointment system with insurance verification",context:"Built on Spring Boot with MVC architecture. Five core modules: User Management, Appointment Scheduling, Insurance Verification and Claims, Doctor and Staff Management, and Medical Records and Prescription.",result:"Achieved 95% accuracy in appointment booking vs 85% for manual and 90% for legacy systems. Reduced waiting times and improved financial transparency through insurance integration.",keywords:["Spring Boot","MVC","Java","insurance verification","95% accuracy"]},
+  {id:"2.1.5",title:"Design and development of a web-based patient management information system",authors:"Marbella, Akbar, and Setiawan",year:2024,focus:"Web-based system with queue, reservation, WhatsApp notifications, and medical action modules",context:"Five modules: queue, reservation, medical record, WhatsApp notification, and medical action. Patients book via smartphone and check doctor availability. Medical action module allows doctors to plan treatments.",result:"Improved efficiency and patient satisfaction. Limitations in responsiveness and notification costs. Recommended improvements in responsiveness and additional features.",keywords:["WhatsApp","queue management","smartphone booking","notification costs","5 modules"]},
+  {id:"2.1.6",title:"Did Not Attend, Could Not Attend: An Audit of SMS Reminders in Integrated Care",authors:"Scully and team",year:2025,focus:"Impact of automated SMS reminders on attendance in Ireland's ICPOP program",context:"Study of Ireland's ICPOP program. 380 appointments analyzed. Rural clinics performed better than urban clinics. Main non-attendance reasons were scheduling conflicts and illness.",result:"Attendance increased from 63% to 68%. DNA rate reduced from 20% to 15%. Effect not statistically significant but SMS reminders are beneficial when combined with flexible scheduling and patient engagement.",keywords:["ICPOP","Ireland","DNA rate","rural vs urban","380 appointments","SMS audit"]},
+  {id:"2.1.7",title:"Digitalization of health care in low- and middle-income countries",authors:"Monlezun and team",year:2025,focus:"Digital health tools in LMICs — governance, infrastructure, equity",context:"Examined EHRs, telehealth, and AI analytics in low- and middle-income countries. Highlighted governance, infrastructure, and human security as key enablers. Included case studies showing cost reduction.",result:"Digital health can reduce costs and expand access. Responsible digitalization with partnerships and inclusive design can transform healthcare if risks of unequal access are managed.",keywords:["LMICs","telehealth","governance","equity","human security","digitalization"]},
+  {id:"2.1.8",title:"Efficient patient care: impact of online appointment scheduling on the no-show rate",authors:"Kammrath Betancor and peers",year:2025,focus:"OAS impact on no-show rates in ophthalmology practice and university hospital",context:"OAS implemented in a private ophthalmology practice (16,894 appointments) and a university hospital (81,173 appointments) over 20 months. Patients had 24/7 scheduling, reminders, and flexibility.",result:"Private practice reduced no-shows from 5.9% to 1.8%. University hospital had higher no-shows (14.3% vs 11.2%) except for SMS reminder users.",keywords:["ophthalmology","16894","81173","OAS","20 months","no-show"]},
+  {id:"2.1.9",title:"Enhancing Patient Experience through Digital Transformation in OPD Services",authors:"Xiaoyan and De Leon",year:2024,focus:"Digital tools (EHR, telemedicine, portals, automation) in outpatient department services",context:"Used EHRs, telemedicine, patient portals, and automation in OPD. Found challenges in data security, integration, and staff training.",result:"EHRs improved transparency, telemedicine improved convenience, automation reduced waiting times, portals improved communication. Overall improved patient satisfaction and efficiency.",keywords:["OPD","patient portals","telemedicine","automation","outpatient","digital transformation"]},
+  {id:"2.1.10",title:"Enhancing Performance of Patient Appointment Scheduling: Automated Waitlist Process",authors:"North and co-authors",year:2025,focus:"Automated waitlist and self-rescheduling system at Mayo Clinic",context:"System at Mayo Clinic enabled real-time offers for earlier appointments and self-scheduling. In 2023: 229,998 waitlisted appointments, over one million offers sent.",result:"Offers accepted at 24.6% rate, average 22.6 days before original scheduled date. Reduced wait times without staff involvement. Variable accept rates by demographics and appointment types.",keywords:["Mayo Clinic","229998","one million offers","24.6%","waitlist","self-scheduling"]},
+  {id:"2.1.11",title:"Evaluating hospital appointment systems in Turkey: Challenges and opportunities",authors:"Küçük and team",year:2021,focus:"Central Physician Appointment System (CPAS) effectiveness in Turkish public hospitals",context:"Examined CPAS using data from Turkish Ministry of Health. Focused on appointment usage, demographics, and complaints. Assessed accessibility and demand management.",result:"Better physician time management, reduced waiting times, increased patient satisfaction and reduced infection risk. System marred by delays due to limited appointments and increased demand.",keywords:["CPAS","Turkey","Turkish Ministry of Health","physician time management","limited appointments"]},
+  {id:"2.1.12",title:"Feasibility of UpToDate clinical decision support tool in Philippine primary care",authors:"Calderon and team",year:2024,focus:"UpToDate (UTD) clinical decision support tool in urban, rural, remote Philippine settings",context:"Studied UTD tool among Philippine primary care providers. Highlighted deficient workforce and role of community health workers. Used qualitative research methods.",result:"Tool valued for ease of use, content, clinical decision-making, education, and professional development. Challenges: internet connectivity, electricity, outdated technology, and language barriers.",keywords:["UpToDate","Philippines","community health workers","rural","qualitative","UTD","connectivity"]},
+  {id:"2.1.13",title:"From clinics to the cloud: Securing healthcare in the digital age",authors:"MB Technews",year:2025,focus:"Cybersecurity approach for Philippines' digital healthcare transformation",context:"Discussed AI and cloud-based healthcare in the Philippines. Emphasized incident response planning, backups, and cybersecurity simulations. Holistic approach required.",result:"Country's digitalization must include both technological and human aspects for security and resilience. Proactive cybersecurity is essential during digital migration.",keywords:["cloud","cybersecurity","Philippines","AI","incident response","resilience","MB Technews"]},
+  {id:"2.1.14",title:"Harnessing the power of clinical decision support systems",authors:"Chen and team",year:2023,focus:"Evolution, PRECISE-CARING benefits, and challenges of CDSS",context:"Traced CDSS development from 1950s–60s computer tools through MYCIN expert system to modern AI-integrated platforms linked with EHRs. Introduced the PRECISE-CARING framework.",result:"CDSS improves decision-making, patient safety, efficiency, and cost savings. Challenges: data quality, interoperability, clinician acceptance, regulatory barriers, and global disparities.",keywords:["PRECISE-CARING","MYCIN","CDSS","1950s","decision support","AI-integrated","interoperability"]},
+  {id:"2.1.15",title:"Implementation of Outpatient Consultation Digitalization: Basis for Development Plan",authors:"Angeles and Garcia",year:2025,focus:"Digitalization of outpatient consultation at San Lorenzo Ruiz General Hospital",context:"Examined EHRs, automated scheduling, and online invoicing. Used Mergel's digital transformation theory and an Input-Process-Output model. Study set at San Lorenzo Ruiz General Hospital.",result:"Improved patient convenience and staff efficiency. Challenges: data privacy, digital literacy, infrastructure. Proposed hybrid outpatient consultation plan combining digital and traditional methods.",keywords:["San Lorenzo Ruiz","Mergel","IPO model","hybrid","outpatient","digitalization"]},
+  {id:"2.1.16",title:"Investigating Patient Use and Experience of Online Appointment Booking in Primary Care",authors:"Atherton and peers",year:2024,focus:"Patient usage and experience of online appointment booking in England's primary care",context:"Survey and interviews in England. 45.11% of patients were aware of online booking, but only 15.61% used it. Age and socioeconomic factors affected usage and awareness.",result:"Younger and chronic condition patients more likely to use online booking. Older and deprived patients face more barriers. Challenges include digital skills, internet access, and usability.",keywords:["England","45.11%","15.61%","socioeconomic","chronic condition","primary care","awareness"]},
+  {id:"2.1.17",title:"Online Appointment Booking and Patient Management System",authors:"Meena, Harikes, and Alagu Raja",year:2025,focus:"Three-tier architecture digital platform for appointment booking and patient management",context:"Three-tier architecture (presentation, application, data) enabling scalability, security, and modularity. Patients book and view history; providers manage availability; administrators oversee profiles and generate reports.",result:"Reduced scheduling conflicts, better accessibility, high user satisfaction. Automated notifications reduced missed appointments. Digitized records improved clinical decision-making.",keywords:["three-tier","modularity","scalability","automated notifications","patient management","digital platform"]},
+  {id:"2.1.18",title:"Online Hospital Registration and Appointment Management System (OHRAMS)",authors:"Chew, Lee, and Jegatheswaran",year:2023,focus:"Web-based OHRAMS using Angular frontend, Spring Boot backend, and MySQL",context:"Angular frontend, Spring Boot backend, MySQL database. 31 unit test plan sets with 216 test cases. User acceptance testing with 5 participants (3 patients, 1 doctor, 1 staff).",result:"Reduced waiting times, improved registration efficiency, overall user satisfaction. Limitations: no queue position tracker, no automated pre-appointment notifications.",keywords:["OHRAMS","Angular","216 test cases","31 unit test","queue position tracker","5 participants"]},
+  {id:"2.1.19",title:"Patient-Centered Clinical Decision Support — Where Are We and Where to Next?",authors:"Dullabh and team",year:2024,focus:"PC CDS components (knowledge, data, delivery, use) and the quintuple aim",context:"Based on 175 literature sources and 18 key informant interviews. Four core components: knowledge, data, delivery (via apps, portals, chatbots, SMS), and use for shared decision-making.",result:"Highlights gaps in patient engagement, technical integration, and delivery optimization. PC CDS supports quintuple aim: population health, patient experience, cost reduction, clinician well-being, and health equity.",keywords:["175 sources","18 interviews","quintuple aim","PC CDS","shared decision-making","chatbots"]},
+  {id:"2.1.20",title:"Perceived satisfaction of web-based medical appointment system in Saudi Arabia",authors:"Radwan",year:2024,focus:"Patient satisfaction with Saudi Arabia's Sehhaty appointment app via meta-analysis",context:"Synthesized 3 studies with 781 patients on the Sehhaty app. Meta-analysis on satisfaction. Sehhaty allows booking, canceling, and rescheduling via smartphone.",result:"59.41% of patients satisfied; about two-thirds agreed it improved healthcare accessibility. Female patients slightly more satisfied, though differences not significant.",keywords:["Sehhaty","Saudi Arabia","781 patients","59.41%","meta-analysis","3 studies"]},
+  {id:"2.1.21",title:"Predicting patient no-shows using machine learning: A comprehensive review",authors:"Toffaha and others",year:2025,focus:"Machine learning approaches for predicting patient no-shows",context:"Reviewed ML methods, data sources, and frameworks. Models include decision trees, random forests, SVMs, and deep learning. Data includes demographic, appointment, socioeconomic, and behavioral factors.",result:"ML models may outperform traditional statistics. Challenges: data quality, bias, workflow integration, explainable AI. Advocates hybrid ML-behavioral models and cross-institutional datasets.",keywords:["random forest","explainable AI","no-show","ML","decision trees","hybrid ML-behavioral","cross-institutional"]},
+  {id:"2.1.22",title:"Problems related to AI-based clinical decision support systems: Interview study",authors:"Giebel and co-researchers",year:2024,focus:"Challenges of AI-based CDSS including opacity, bias, user resistance, and legal issues",context:"Conducted with 17 experts. Identified technological difficulties, data quality issues, user resistance, ethical concerns, and legal complexities as major barriers.",result:"User-related issues are the biggest barriers: increased workload, inadequate training, mistrust of AI. AI should support, not replace, healthcare experts. Transparency and training are essential.",keywords:["17 experts","algorithmic opacity","automation bias","alert fatigue","legal","user resistance","CDSS"]},
+  {id:"2.1.23",title:"Smart Med Connect: Online Medical Appointment Booking",authors:"Sandeep and team",year:2025,focus:"MERN stack platform with real-time scheduling, secure payments, and JWT authentication",context:"Built on MERN stack. Security features: password encryption, JWT authentication, role-based access, bot protection, input validation. Patients receive reminders and provide feedback.",result:"Reduced missed appointments, higher patient satisfaction, optimized workflows. Scalable and secure solution with future AI insights, predictive analytics, and telemedicine potential.",keywords:["MERN","JWT","bot protection","SmartMedConnect","role-based","secure payments","feedback"]},
+  {id:"2.1.24",title:"SMS and Telephone Communication as Tools to Reduce Missed Medical Appointments",authors:"Brancewicz and peers",year:2025,focus:"SMS and phone reminders in a mental health outpatient clinic in Gdańsk, Poland",context:"Mental health outpatient clinic in Gdańsk, Poland. Compared 2019 and 2023 data. Highest engagement in 35–44 age group (55.41% form return). Over 93% reported high satisfaction.",result:"Missed appointments dropped from 18.55% to 7.01%. SMS and phone reminders are cost-effective and scalable. Digital barriers remain for older patients.",keywords:["Gdańsk","Poland","mental health","18.55%","7.01%","35-44","55.41%","telephone"]},
+  {id:"2.1.25",title:"Technology and Access to Healthcare with Different Scheduling Systems: A Scoping Review",authors:"Manarte",year:2024,focus:"Global adoption of online scheduling; equity concerns for older, rural, low-income groups",context:"Reviewed 23 studies from 2018–2023 including Portugal's 'Call First, Save Lives' pilot. Analyzed self-scheduling and automated systems. Highlighted digital equity concerns.",result:"Digital scheduling improves access, reduces waiting times, and is well-received. Disparities persist for older adults, rural, and lower socioeconomic groups. Confidentiality and interoperability issues noted.",keywords:["23 studies","Portugal","Call First Save Lives","scoping review","digital equity","self-scheduling"]},
+  {id:"2.1.26",title:"Knowledge-based clinical decision support systems for evidence-based medicine in chronic disease",authors:"Gholamzadeh, Abtahi, and Safdari",year:2023,focus:"Rule-based CDSS for evidence-based medicine in chronic disease management",context:"Systematic review of 38 studies across 16 countries. Focused on rule-based CDSSs using guidelines, protocols, and expert knowledge — distinguished from ML-based approaches.",result:"73.68% of studies reported positive impacts on clinical decision-making. CDSSs improve early diagnosis, guideline adherence, error prevention, and EHR integration. Only 2 studies used formal CDSS design framework.",keywords:["38 studies","16 countries","73.68%","rule-based","knowledge-to-action","chronic disease","evidence-based"]},
+  {id:"2.1.27",title:"Effectivity of Outpatient Waiting Time through Online or Web-based Reservations",authors:"Nabila and Ayuningtyas",year:2024,focus:"Impact of online scheduling on outpatient waiting times and patient satisfaction",context:"Reviewed 9 studies from 2018–2023 across several countries. Found traditional walk-in and phone-based methods worsen congestion. Indonesia context highlighted as having manual registration challenges.",result:"Online reservations significantly reduced waiting times, lowered no-shows, improved flexibility and satisfaction. Eased staff workload, optimized resource allocation, and increased transparency.",keywords:["9 studies","Indonesia","walk-in","outpatient waiting time","literature review","2018-2023"]},
+  {id:"2.1.28",title:"Web-based Application for Doctor-Patient Appointment Management System",authors:"Raj Kumar, Shadheem, and Surya",year:2024,focus:"React.js and Node.js DAS with EHR integration and priority scheduling",context:"Built with React.js and Node.js. Integrates with EHRs for real-time updates. Priority scheduling based on urgency, special needs, wait time, and doctor availability. SSL security.",result:"Reduced waiting times, fewer missed appointments, improved patient satisfaction. EHR integration enhanced clinician efficiency. Future recommendations: blockchain, telemedicine, mobile access.",keywords:["React.js","Node.js","SSL","EHR integration","priority scheduling","Doctor Appointment System","DAS"]},
+  {id:"2.1.29",title:"Web-based SMS notification appointment and records management system",authors:"Delfin, Vergara, Vergara, and Yenna",year:2025,focus:"Reinforcement learning for adaptive healthcare appointment scheduling",context:"Used reinforcement learning (RL) to optimize web-based appointment systems. RL enables adaptive scheduling by learning patient behavior and hospital workflows. Responds to real-time changes.",result:"RL reduces staff idle time, enhances patient flow. Scalable, intelligent scheduling solution that improves operational efficiency and patient engagement. Minimizes waiting through optimized time-slot allocation.",keywords:["reinforcement learning","RL","adaptive scheduling","cancellations","real-time","patient behavior"]},
+  {id:"2.1.30",title:"What the future of digital healthcare would look like in the Philippines",authors:"Philippine Council for Health Research and Development (PCHRD)",year:2023,focus:"Future of digital healthcare in the Philippines: equity, R&D, innovation",context:"77% internet coverage, 85% population online. Traces back to 2004 Community Health Information Tracking System. Discusses both job displacement concerns and professional opportunity creation.",result:"Digital health can create new professional opportunities. Key challenge: equitable access. R&D essential for fit-for-purpose technologies aligned with Filipino needs.",keywords:["PCHRD","77%","85%","2004","Community Health Information Tracking System","Filipino","job displacement"]},
+  {id:"2.2",title:"Synthesis of Related Literature",authors:"Research Team",year:2025,focus:"Synthesis connecting all 30 RRLs to the proposed UHS online appointment system",context:"Connects all reviewed literature to the proposed UHS system for Pamantasan ng Lungsod ng Maynila (PLM). Synthesizes evidence on digitalization need, scheduling challenges, CDSS benefits, and security requirements.",result:"Affirms that a well-designed, secure, user-centered online appointment system with integrated CDSS is timely and necessary for UHS. Supports accessibility, efficiency, and quality of healthcare delivery.",keywords:["UHS","Pamantasan ng Lungsod ng Maynila","synthesis","CDSS","digitalization","security","PLM"]}
+];
+
+const MODES=[
+  {key:"context",label:"Context clue",prompt:(r)=>`<div class="mode-badge">Context clue — identify the study</div><div class="clue-text">"${r.context}"</div>`},
+  {key:"result",label:"Results",prompt:(r)=>`<div class="mode-badge">Results — identify the study</div><div class="clue-text">"${r.result}"</div>`},
+  {key:"focus",label:"Focus / topic",prompt:(r)=>`<div class="mode-badge">Focus / topic — identify the study</div><div class="clue-text">"${r.focus}"</div>`},
+  {key:"authors",label:"Who wrote it?",prompt:(r)=>`<div class="mode-badge">Authors & year — who wrote this study?</div><div class="clue-text" style="font-style:italic">"${r.title}"</div>`},
+  {key:"title",label:"Identify the title",prompt:(r)=>`<div class="mode-badge">Identify the title — which study matches this focus?</div><div class="clue-text">"${r.focus}"</div><div class="clue-label">Context hint:</div><div class="clue-text" style="font-size:13px;color:var(--text2)">${r.context.slice(0,120)}…</div>`}
+];
+
+let state={mode:0,queue:[],current:0,score:0,total:0,answered:false,showHint:false,opts:[],done:false};
+
+function shuffle(a){let b=[...a];for(let i=b.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+
+function getWrongOpts(correct){
+  return shuffle(RRLS.filter(r=>r.id!==correct.id)).slice(0,3);
+}
+
+function optLabel(rrl){
+  const m=MODES[state.mode];
+  if(m.key==="authors") return rrl.authors+" ("+rrl.year+")";
+  if(m.key==="title") return rrl.title;
+  return rrl.id+" — "+rrl.title.slice(0,48)+(rrl.title.length>48?"…":"");
+}
+
+function render(){
+  const root=document.getElementById("quiz-root");
+  if(state.done){
+    const pct=Math.round((state.score/state.total)*100);
+    const grade=pct>=90?"Excellent!":pct>=75?"Good job!":pct>=50?"Keep practicing!":"Review and retry!";
+    const gradeColor=pct>=75?"var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)":"pct>=50?\"var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)\":\"var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)\"";
+    root.innerHTML=`<div class="end-card">
+      <div style="font-size:36px;margin-bottom:.5rem">${pct>=75?"🎉":pct>=50?"👍":"📖"}</div>
+      <div class="end-score">${state.score}<span style="font-size:24px;color:var(--text2)">/${state.total}</span></div>
+      <div style="display:inline-block;padding:4px 16px;border-radius:99px;font-size:13px;font-weight:600;margin:.5rem 0 1rem;background:${pct>=75?"var(--green-bg);color:var(--green-text)":pct>=50?"var(--amber-bg);color:var(--amber-text)":"var(--red-bg);color:var(--red-text)"}">${pct}% — ${grade}</div>
+      <div class="end-label">You completed all ${state.total} questions in <strong>${MODES[state.mode].label}</strong> mode.</div>
+      <button class="next-btn" onclick="restart()" style="margin:auto;display:block">Restart quiz</button>
+    </div>`;
+    return;
+  }
+
+  const rrl=state.queue[state.current];
+  const opts=state.opts.length?state.opts:(state.opts=shuffle([rrl,...getWrongOpts(rrl)]));
+  const prog=Math.round((state.current/state.queue.length)*100);
+  const m=MODES[state.mode];
+  const showHintBtn=m.key!=="authors"&&m.key!=="title";
+
+  root.innerHTML=`
+  <div class="top-bar">
+    <div class="score-row">
+      <span class="pill pill-correct">✓ ${state.score}</span>
+      <span class="pill pill-wrong">✗ ${state.total-state.score}</span>
+      <span class="pill pill-info">${state.current+1} / ${state.queue.length}</span>
+    </div>
+    <button class="restart-btn" onclick="restart()">↺ Restart</button>
+  </div>
+  <div class="mode-tabs">
+    ${MODES.map((mo,i)=>`<button class="tab${state.mode===i?" active":""}" onclick="changeMode(${i})">${mo.label}</button>`).join("")}
+  </div>
+  <div class="progress-wrap"><div class="progress-bar" style="width:${prog}%"></div></div>
+  <div class="card">
+    ${m.prompt(rrl)}
+    ${showHintBtn?`<button class="hint-btn" onclick="toggleHint()">💡 ${state.showHint?"Hide hint":"Show hint (author & year)"}</button>${state.showHint?`<div class="hint-reveal">Author(s): <strong>${rrl.authors}</strong> &nbsp;|&nbsp; Year: <strong>${rrl.year}</strong></div>`:""}`:``}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:1.25rem" id="opts-grid">
+      ${opts.map((o,i)=>`<button class="opt" id="opt-${i}" onclick="choose(${i})">${optLabel(o)}</button>`).join("")}
+    </div>
+    <div id="feedback-area"></div>
+    <div class="nav-row" id="nav-row" style="display:none">
+      <button class="next-btn" onclick="next()">${state.current+1>=state.queue.length?"See results →":"Next →"}</button>
+    </div>
+  </div>`;
+}
+
+function toggleHint(){
+  state.showHint=!state.showHint;
+  render();
+}
+
+function changeMode(i){
+  state.mode=i;
+  state.queue=shuffle([...RRLS]);
+  state.current=0;state.score=0;state.total=0;state.done=false;state.opts=[];state.showHint=false;
+  render();
+}
+
+function choose(i){
+  if(state.answered) return;
+  state.answered=true;state.total++;
+  const rrl=state.queue[state.current];
+  const chosen=state.opts[i];
+  const correct=chosen.id===rrl.id;
+  if(correct) state.score++;
+  state.opts.forEach((o,idx)=>{
+    const btn=document.getElementById("opt-"+idx);
+    if(!btn) return;
+    btn.disabled=true;
+    if(o.id===rrl.id) btn.className="opt "+(idx===i?"correct":"reveal");
+    else if(idx===i) btn.className="opt wrong";
+    else btn.style.opacity=".35";
+  });
+  document.getElementById("feedback-area").innerHTML=`
+    <div class="feedback ${correct?"correct":"wrong"}">${correct?"✓ Correct!":"✗ Incorrect."} <span style="font-weight:normal">${rrl.id} — ${rrl.title}</span></div>
+    <div class="detail-block">
+      <strong>Authors:</strong> ${rrl.authors} (${rrl.year})<br>
+      <strong>Focus:</strong> ${rrl.focus}<br>
+      <strong>Key result:</strong> ${rrl.result}
+    </div>`;
+  document.getElementById("nav-row").style.display="flex";
+}
+
+function next(){
+  state.current++;state.answered=false;state.showHint=false;state.opts=[];
+  if(state.current>=state.queue.length) state.done=true;
+  render();
+}
+
+function restart(){
+  Object.assign(state,{queue:shuffle([...RRLS]),current:0,score:0,total:0,done:false,answered:false,showHint:false,opts:[]});
+  render();
+}
+
+restart();
+</script>
+</body>
+</html>
+HTMLEOF
+echo "Done"
+
+
+
+
+
